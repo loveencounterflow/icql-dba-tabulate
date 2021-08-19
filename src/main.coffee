@@ -107,14 +107,6 @@ class @Tbl
     source      = SP.new_push_source()
     pipeline    = []
     pipeline.push source
-    # pipeline.push $watch ( d ) -> echo d
-    pipeline.push $ ( d, send ) =>
-      # debug '^76^', d
-      for k, v of d
-        switch type = type_of v
-          when 'text' then  d[ k ] = CND.blue v
-          else              d[ k ] = CND.white rpr v
-      send d
     pipeline.push TBL.$tabulate { multiline: false, widths, }
     pipeline.push $ ( d, send ) -> send d.text
     pipeline.push $drain ( result ) -> R = result.join '\n'

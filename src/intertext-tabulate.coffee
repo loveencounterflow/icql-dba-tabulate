@@ -80,6 +80,7 @@ _new_state = ( settings ) ->
   S.headings          =       settings[ 'headings'    ] ? yes
   S.keys              =       settings[ 'keys'        ] ? null
   S.box               = copy  settings[ 'box'         ] ? copy boxes[ 'plain' ]
+  S.box[ k ]          = CND.grey v for k, v of S.box
   #.........................................................................................................
   S.pad               = ( ' '.repeat S.pad ) if isa.float S.pad
   #.........................................................................................................
@@ -164,12 +165,25 @@ as_row = ( S, data, keys = null, is_header = false ) =>
     throw new Error "^intertype/tabulate/as_row@2^ setting multiline #{rpr S.multiline} not supported"
   for [ key, idx, ] in keys_and_idxs
     value     = data[ key ]
+    #.......................................................................................................
+    if is_header
+      color = CND.gold
+    else
+      if      value in [ true,  'true',   ] then  color = CND.lime
+      else if value in [ false, 'false',  ] then  color = CND.crimson
+      else
+        switch type_of value
+          when 'float'                      then  color = CND.yellow
+          when 'text'                       then  color = CND.blue
+          else                                    color = CND.steel
+    #.......................................................................................................
     text      = as_text S, value
     width     = S.widths[ idx ]
     align     = S.alignments[ idx ]
     ellipsis  = S.ellipsis
     text      = to_width text, width, { align, ellipsis, }
     text      = S.format text, { value, row: data, is_header, key, idx, } if S.format?
+    text      = color text
     R.push text
   #.......................................................................................................
   return S.box.left + ( R.join S.box.center ) + S.box.right
@@ -180,7 +194,6 @@ $as_row = ( S ) ->
     return send d unless select d, '^data'
     { data, } = d
     text      = as_row S, data, S.keys, false
-    is_header = false
     return send new_datom '^table', { text, }
     send d
 
