@@ -5,6 +5,7 @@ specifiers:
   datom: ^8.0.3
   guy: ^1.0.0
   intertype: ^7.6.7
+  letsfreezethat: ^3.1.0
   steampipes: ^6.7.1
   to-width: ^1.1.0
 
@@ -13,6 +14,7 @@ dependencies:
   datom: 8.0.3
   guy: 1.0.0
   intertype: 7.6.7
+  letsfreezethat: 3.1.0
   steampipes: 6.7.1
   to-width: 1.1.0
 
