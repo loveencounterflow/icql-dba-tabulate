@@ -127,29 +127,49 @@ class @Tbl
       order_by
       limit }       = cfg
     schema_i        = @dba.sql.I schema
-    name_i          = schema_i + '.' + @dba.sql.I name
+    qname_i         = schema_i + '.' + @dba.sql.I name
     limit           = if cfg.limit is null then 1e9 else cfg.limit
     #.......................................................................................................
+    ### get type of DB object ###
     ### TAINT implement in `Dba` ###
-    sample_row      = @dba.first_row @dba.query SQL"select * from #{name_i} limit 1"
-    col_names       = Object.keys sample_row
-    # order_by        = [ 1 .. col_names.length ].join ', '
-    #.......................................................................................................
-    ### TAINT implement in `Dba` ###
-    type            = @dba.first_value @dba.query SQL"""
-      select type from #{schema_i}.sqlite_schema
+    { type, sql, } = @dba.first_row @dba.query SQL"""
+      select type, sql from #{schema_i}.sqlite_schema
       where name = $name
       limit 1;""", { name, }
+    # #.......................................................................................................
+    # ### get definition of object ###
+    # ### TAINT implement in `Dba` ###
+    # type            = @dba.first_value @dba.query SQL"""
+    #   select type from #{schema_i}.sqlite_schema
+    #   where name = $name
+    #   limit 1;""", { name, }
+    # yield sql
     #.......................................................................................................
+    ### get column names ###
     ### TAINT implement in `Dba` ###
-    row_count       = @dba.first_value @dba.query SQL"select count(*) from #{name_i};"
+    try
+      sample_row      = @dba.first_row @dba.query SQL"select * from #{qname_i} limit 1"
+      unless sample_row?
+        yield ( CND.yellow CND.reverse ' 0 ' ) + ( CND.steel " no rows in #{type} #{qname_i}" )
+        return null
+      col_names       = Object.keys sample_row
+      # order_by        = [ 1 .. col_names.length ].join ', '
+    catch error
+      error_name = error.name ? error.code ? 'error'
+      yield ( CND.red CND.reverse ' X ' ) + ( CND.steel " #{error_name}: #{error.message}" )
+      return null
     #.......................................................................................................
+    ### get row count ###
     ### TAINT implement in `Dba` ###
-    query           = @dba.query SQL"select * from #{name_i} order by #{order_by} limit #{limit};"
+    row_count       = @dba.first_value @dba.query SQL"select count(*) from #{qname_i};"
+    #.......................................................................................................
+    ### dump data ###
+    ### TAINT implement in `Dba` ###
+    query           = @dba.query SQL"select * from #{qname_i} order by #{order_by} limit #{limit};"
     #.......................................................................................................
     yield "\n"
-    if row_count > limit then yield "#{type} #{name_i} (#{row_count} rows; first #{limit} shown)"
-    else                      yield "#{type} #{name_i} (all #{row_count} rows)"
+    if row_count > limit then yield ( CND.green CND.reverse '   ' ) + CND.steel " #{type} #{qname_i} (#{row_count} rows; first #{limit} shown)"
+    else                      yield ( CND.green CND.reverse '   ' ) + CND.steel " #{type} #{qname_i} (all #{row_count} rows)"
     yield @_tabulate query
     return null
 
