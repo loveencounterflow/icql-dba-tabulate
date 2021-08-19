@@ -25,7 +25,8 @@ types                     = new ( require 'intertype' ).Intertype
 # on_process_exit           = require 'exit-hook'
 # sleep                     = ( dts ) -> new Promise ( done ) => setTimeout done, dts * 1000
 SQL                       = String.raw
-TXT                       = require 'intertext'
+# TXT                       = require 'intertext'
+TBL                       = require './intertext-tabulate'
 { width_of }              = require 'to-width'
 { lets
   freeze }                = require 'letsfreezethat'
@@ -114,7 +115,7 @@ class @Tbl
           when 'text' then  d[ k ] = CND.blue v
           else              d[ k ] = CND.white rpr v
       send d
-    pipeline.push TXT.TBL.$tabulate { multiline: false, widths, }
+    pipeline.push TBL.$tabulate { multiline: false, widths, }
     pipeline.push $ ( d, send ) -> send d.text
     pipeline.push $drain ( result ) -> R = result.join '\n'
     SP.pull pipeline...

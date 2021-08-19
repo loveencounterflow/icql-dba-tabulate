@@ -8,13 +8,10 @@
   },
   "dependencies": {
     "cnd": "^9.2.2",
-    "deasync": "^0.1.22",
+    "datom": "^8.0.3",
     "guy": "^1.0.0",
-    "intertext": "^5.0.1",
     "intertype": "^7.6.7",
-    "letsfreezethat": "^3.1.0",
     "steampipes": "^6.7.1",
-    "to": "^0.2.9",
     "to-width": "^1.1.0"
   },
   "scripts": {
