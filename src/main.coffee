@@ -46,19 +46,25 @@ types.declare 'sql_limit', ( x ) ->
 
 #-----------------------------------------------------------------------------------------------------------
 types.declare 'dbatbl_walk_relation_lines_cfg', tests:
-  "@isa.object x":                    ( x ) -> @isa.object x
-  "@isa.sql_limit x.limit":           ( x ) -> @isa.sql_limit x.limit
+  "@isa.object x":                  ( x ) -> @isa.object x
+  "@isa.sql_limit x.limit":         ( x ) -> @isa.sql_limit x.limit
+  "@isa.nonempty_text x.order_by":  ( x ) -> @isa.nonempty_text x.order_by
+  "@isa.nonempty_text x.schema":    ( x ) -> @isa.nonempty_text x.schema
+  "@isa.nonempty_text x.name":      ( x ) -> @isa.nonempty_text x.name
 
 #-----------------------------------------------------------------------------------------------------------
-defaults =
+types.defaults =
   dbatbl_walk_relation_lines_cfg:
     limit:      10
-    order_by:   'random'
+    order_by:   'random()'
+    schema:     'main'
+    name:       null
+
 
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-class @Dbatbl
+class @Tbl
 
   #---------------------------------------------------------------------------------------------------------
   constructor: ( cfg ) ->
@@ -68,7 +74,7 @@ class @Dbatbl
     guy.props.def @, 'dba', { enumerable: false, value: cfg.dba, }
     delete @cfg.dba
     @cfg      = freeze @cfg
-    @tabulate = guy.nowait.for_awaitable @tabulate_async
+    # @tabulate = guy.nowait.for_awaitable @tabulate_async
     return undefined
 
   #---------------------------------------------------------------------------------------------------------
@@ -89,10 +95,11 @@ class @Dbatbl
 
   #---------------------------------------------------------------------------------------------------------
   ### TAINT use `cfg` ###
-  tabulate_async: ( query ) => new Promise ( resolve, reject ) =>
+  _tabulate: ( query ) =>
     ### TAINT cfg option: echo as-you-go ###
     ### TAINT cfg option: return list of lines ###
     ### TAINT cfg option: start with newline ###
+    R           = null
     { leading_rows
       widths  } = @_estimate_column_widths query
     #.....................................................................................................
@@ -109,31 +116,48 @@ class @Dbatbl
       send d
     pipeline.push TXT.TBL.$tabulate { multiline: false, widths, }
     pipeline.push $ ( d, send ) -> send d.text
-    pipeline.push $drain ( result ) -> resolve result.join '\n'
+    pipeline.push $drain ( result ) -> R = result.join '\n'
     SP.pull pipeline...
     #.....................................................................................................
     source.send row for row in leading_rows
     source.send row for row from query
     source.end()
-    return null
+    return R
 
   #---------------------------------------------------------------------------------------------------------
   ### TAINT use `cfg` ###
-  walk_relation_lines: ( name ) ->
+  walk_relation_lines: ( cfg ) ->
     ### TAINT add support for schemas ###
-    name_i          = @dba.sql.I name
+    validate.dbatbl_walk_relation_lines_cfg cfg = { types.defaults.dbatbl_walk_relation_lines_cfg..., cfg..., }
+    { schema
+      name
+      order_by
+      limit }       = cfg
+    schema_i        = @dba.sql.I schema
+    name_i          = schema_i + '.' + @dba.sql.I name
+    limit           = if cfg.limit is null then 1e9 else cfg.limit
+    #.......................................................................................................
+    ### TAINT implement in `Dba` ###
     sample_row      = @dba.first_row @dba.query SQL"select * from #{name_i} limit 1"
     col_names       = Object.keys sample_row
-    order_by        = [ 1 .. col_names.length ].join ', '
-    order_by        = 'random()'
-    limit           = 10
-    type            = @dba.first_value @dba.query SQL"select type from sqlite_schema where name = $name;", { name, }
-    query           = @dba.query SQL"select * from #{name_i} order by #{order_by} limit #{limit};"
+    # order_by        = [ 1 .. col_names.length ].join ', '
+    #.......................................................................................................
+    ### TAINT implement in `Dba` ###
+    type            = @dba.first_value @dba.query SQL"""
+      select type from #{schema_i}.sqlite_schema
+      where name = $name
+      limit 1;""", { name, }
+    #.......................................................................................................
+    ### TAINT implement in `Dba` ###
     row_count       = @dba.first_value @dba.query SQL"select count(*) from #{name_i};"
+    #.......................................................................................................
+    ### TAINT implement in `Dba` ###
+    query           = @dba.query SQL"select * from #{name_i} order by #{order_by} limit #{limit};"
+    #.......................................................................................................
     yield "\n"
     if row_count > limit then yield "#{type} #{name_i} (#{row_count} rows; first #{limit} shown)"
     else                      yield "#{type} #{name_i} (all #{row_count} rows)"
-    yield @tabulate query
+    yield @_tabulate query
     return null
 
 
