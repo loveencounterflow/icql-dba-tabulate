@@ -1,6 +1,6 @@
 {
   "name": "icql-dba-tabulate",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Display SQLite relations as Unicode tables",
   "main": "lib/main.js",
   "directories": {
