@@ -1,0 +1,40 @@
+{
+  "name": "icql-dba-tabulate",
+  "version": "0.0.1",
+  "description": "Display SQLite relations as Unicode tables",
+  "main": "lib/main.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "cnd": "^9.2.2",
+    "deasync": "^0.1.22",
+    "guy": "^1.0.0",
+    "intertext": "^5.0.1",
+    "intertype": "^7.6.7",
+    "letsfreezethat": "^3.1.0",
+    "steampipes": "^6.7.1",
+    "to": "^0.2.9",
+    "to-width": "^1.1.0"
+  },
+  "scripts": {
+    "build": "coffee --map -o lib -c src",
+    "test": "echo see 'https://github.com/loveencounterflow/hengist/tree/master/dev/icql-dba-tabulate'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loveencounterflow/icql-dba-tabulate.git"
+  },
+  "keywords": [
+    "icql-dba",
+    "sqlite",
+    "table",
+    "ascii-art"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/loveencounterflow/icql-dba-tabulate/issues"
+  },
+  "homepage": "https://github.com/loveencounterflow/icql-dba-tabulate#readme"
+}
