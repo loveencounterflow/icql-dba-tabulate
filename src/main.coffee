@@ -150,8 +150,10 @@ class @Tbl
     #.......................................................................................................
     # yield "\n"
     if row_count is 0
-      yield ( CND.yellow CND.reverse ' 0 ' ) + ( CND.steel " no rows in #{type} #{qname_i}" )
-      yield field_names.join ', '
+      field_names = CND.grey '  (' + ( ( k for k in field_names ). join ', ' ) + ')'
+      yield ( CND.yellow CND.reverse ' 0 ' ) + ( CND.steel " no rows in #{type} #{qname_i}" ) + field_names
+      # yield @_tabulate_field_names field_names
+      # yield field_names.join ', '
       return null
     #.......................................................................................................
     ### dump data ###
