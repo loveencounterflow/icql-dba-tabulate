@@ -159,7 +159,7 @@ class @Tbl
     ### dump data ###
     ### TAINT implement in `Dba` ###
     #.......................................................................................................
-    query = @dba.query SQL"select * from #{qname_i} order by #{order_by} limit #{limit};"
+    query = @dba.dump_relation { schema, name, order_by, limit, }
     if row_count > limit
       yield ( CND.green CND.reverse " #{row_count} " ) + CND.steel " #{type} #{qname_i} (#{row_count} rows; first #{limit} shown)"
     else
