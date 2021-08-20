@@ -96,27 +96,32 @@ class @Tbl
     return R
 
   #---------------------------------------------------------------------------------------------------------
+  _create_pipeline: ( source, widths ) ->
+    pipeline    = []
+    R           = { pipeline, }
+    pipeline.push source
+    pipeline.push TBL.$tabulate { multiline: false, widths, }
+    pipeline.push $ ( d, send ) -> send d.text
+    pipeline.push $drain ( result ) -> R.collector = result.join '\n'
+    return R
+
+  #---------------------------------------------------------------------------------------------------------
   ### TAINT use `cfg` ###
   _tabulate: ( query ) =>
     ### TAINT cfg option: echo as-you-go ###
     ### TAINT cfg option: return list of lines ###
     ### TAINT cfg option: start with newline ###
-    R           = null
     { leading_rows
       widths  } = @_estimate_column_widths query
     #.....................................................................................................
-    source      = SP.new_push_source()
-    pipeline    = []
-    pipeline.push source
-    pipeline.push TBL.$tabulate { multiline: false, widths, }
-    pipeline.push $ ( d, send ) -> send d.text
-    pipeline.push $drain ( result ) -> R = result.join '\n'
-    SP.pull pipeline...
+    source        = SP.new_push_source()
+    ref           = @_create_pipeline source, widths
+    SP.pull ref.pipeline...
     #.....................................................................................................
     source.send row for row in leading_rows
     source.send row for row from query
     source.end()
-    return R
+    return ref.collector
 
   #---------------------------------------------------------------------------------------------------------
   ### TAINT use `cfg` ###
