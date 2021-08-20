@@ -41,6 +41,7 @@ guy                       = require 'guy'
 #
 #-----------------------------------------------------------------------------------------------------------
 types.declare 'sql_limit', ( x ) ->
+  return true unless x?
   return true if @isa.nonempty_text x
   return true if @isa.cardinal x
   return false
