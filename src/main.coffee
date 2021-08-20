@@ -55,12 +55,23 @@ types.declare 'dbatbl_walk_relation_lines_cfg', tests:
   "@isa.nonempty_text x.name":      ( x ) -> @isa.nonempty_text x.name
 
 #-----------------------------------------------------------------------------------------------------------
+types.declare 'dbatbl_dump_db_cfg', tests:
+  "@isa.object x":                  ( x ) -> @isa.object x
+  "@isa.sql_limit x.limit":         ( x ) -> @isa.sql_limit x.limit
+  "@isa.nonempty_text x.order_by":  ( x ) -> @isa.nonempty_text x.order_by
+  "@isa.nonempty_text x.schema":    ( x ) -> @isa.nonempty_text x.schema
+
+#-----------------------------------------------------------------------------------------------------------
 types.defaults =
   dbatbl_walk_relation_lines_cfg:
     limit:      10
     order_by:   'random()'
     schema:     'main'
     name:       null
+  dbatbl_dump_db_cfg:
+    limit:      10
+    order_by:   'random()'
+    schema:     'main'
 
 
 #===========================================================================================================
@@ -124,8 +135,7 @@ class @Tbl
     return ref.collector
 
   #---------------------------------------------------------------------------------------------------------
-  ### TAINT use `cfg` ###
-  walk_relation_lines: ( cfg ) ->
+  _walk_relation_lines: ( cfg ) ->
     ### TAINT add support for schemas ###
     validate.dbatbl_walk_relation_lines_cfg cfg = { types.defaults.dbatbl_walk_relation_lines_cfg..., cfg..., }
     { schema
@@ -147,6 +157,7 @@ class @Tbl
     ### get row count ###
     ### TAINT implement in `Dba` ###
     row_count       = @dba.first_value @dba.query SQL"select count(*) from #{qname_i};"
+    value_count     = row_count * field_names.length
     #.......................................................................................................
     # yield "\n"
     if row_count is 0
@@ -161,10 +172,35 @@ class @Tbl
     #.......................................................................................................
     query = @dba.dump_relation { schema, name, order_by, limit, }
     if row_count > limit
-      yield ( CND.green CND.reverse " #{row_count} " ) + CND.steel " #{type} #{qname_i} (#{row_count} rows; first #{limit} shown)"
+      yield ( CND.green CND.reverse " #{row_count} rows, #{value_count} values " ) \
+        + CND.steel " #{type} #{qname_i} (#{row_count} rows; first #{limit} shown)"
     else
-      yield ( CND.green CND.reverse " #{row_count} " ) + CND.steel " #{type} #{qname_i} (all #{row_count} rows)"
+      yield ( CND.green CND.reverse " #{row_count} rows, #{value_count} values " ) \
+        + CND.steel " #{type} #{qname_i} (all #{row_count} rows)"
     yield @_tabulate query
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  dump_db: ( cfg ) ->
+    validate.dbatbl_dump_db_cfg cfg = { types.defaults.dbatbl_dump_db_cfg..., cfg..., }
+    { schema
+      order_by
+      limit }       = cfg
+    schema_i        = @dba.sql.I schema
+    #.......................................................................................................
+    title           = SQL"dump of SQLite DB at #{@dba._schemas[ schema ].path}"
+    echo()
+    echo CND.white title
+    echo CND.white '—'.repeat width_of title
+    echo()
+    for line from @_walk_relation_lines { name: 'sqlite_schema', limit: null, }
+      echo line
+    for { name, } from @dba.query SQL"""
+      select * from #{schema_i}.sqlite_schema
+      where type in ( 'table', 'view' )
+      order by type, name;"""
+      echo line for line from @_walk_relation_lines { schema, name, order_by, limit, }
+    #.......................................................................................................
     return null
 
 
