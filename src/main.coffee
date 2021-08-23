@@ -188,7 +188,8 @@ class @Tbl
       limit }       = cfg
     schema_i        = @dba.sql.I schema
     #.......................................................................................................
-    title           = SQL"dump of SQLite DB at #{@dba._schemas[ schema ].path}"
+    db_path         = @dba._schemas?[ schema ]?.path ? ':memory:'
+    title           = SQL"dump of SQLite DB at #{db_path}"
     echo()
     echo CND.white title
     echo CND.white '—'.repeat width_of title
