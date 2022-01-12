@@ -111,6 +111,7 @@ class @Tbl
     pipeline    = []
     R           = { pipeline, }
     pipeline.push source
+    # pipeline.push $watch ( d ) -> debug '^4354583748^', rpr d
     pipeline.push TBL.$tabulate { multiline: false, widths, }
     pipeline.push $ ( d, send ) -> send d.text
     pipeline.push $drain ( result ) -> R.collector = result.join '\n'
@@ -130,7 +131,10 @@ class @Tbl
     SP.pull ref.pipeline...
     #.....................................................................................................
     source.send row for row in leading_rows
-    source.send row for row from query
+    if isa.generator query
+      source.send row for row from query
+    else
+      source.send query[ idx ] for idx in [ leading_rows.length ... query.length ]
     source.end()
     return ref.collector
 
