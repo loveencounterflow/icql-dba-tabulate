@@ -140,7 +140,7 @@ $set_widths_etc = ( S ) ->
     unless S.keys?
       if      isa.list    data  then S.keys = ( idx for _, idx  in data )
       else if isa.object  data  then S.keys = ( key for key     of data )
-      else throw new Error "^intertext/tabulate/set_widths_etc@1^ expected a list or an object, got a #{CND.type_of data}"
+      else throw new Error "^intertext/tabulate/set_widths_etc@1^ expected a list or an object, got a #{type_of data}"
     S.headings = S.keys if S.headings is true
     #...................................................................................................
     unless S.width?
