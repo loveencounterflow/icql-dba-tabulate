@@ -44,12 +44,13 @@ DATOM                     = new ( require 'datom' ).Datom { dirty: false, }
   S = _new_state settings
   #.........................................................................................................
   pipeline = [
-    $as_event           S
-    $set_widths_etc     S
-    $dividers_top       S
-    $dividers_bottom    S
-    $as_row             S
-    $cleanup            S
+    $supply_missing_keys  S
+    $as_event             S
+    $set_widths_etc       S
+    $dividers_top         S
+    $dividers_bottom      S
+    $as_row               S
+    $cleanup              S
     ]
   #.........................................................................................................
   return SP.pull pipeline...
@@ -127,6 +128,30 @@ keys_toplevel     = [
   ]
 values_overflow   = [ 'show',  'hide', ]
 values_alignment  = [ 'left',  'right', 'center', ]
+
+#-----------------------------------------------------------------------------------------------------------
+$supply_missing_keys = ( S ) ->
+  last      = Symbol 'last'
+  first     = null
+  collector = []
+  keys      = new Set()
+  return $ { last, }, ( d, send ) ->
+    if d is last
+      first = { first..., }
+      for key from keys.values()
+        first[ key ] = undefined if first[ key ] is undefined
+      send first
+      send d for d in collector
+      first = null
+      keys.clear()
+      collector.length = 0
+      return null
+    unless first?
+      first = d
+    else
+      collector.push d
+    keys.add key for key of d
+    return null
 
 #-----------------------------------------------------------------------------------------------------------
 $set_widths_etc = ( S ) ->
