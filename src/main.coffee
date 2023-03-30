@@ -93,17 +93,14 @@ class @Tbl
   #---------------------------------------------------------------------------------------------------------
   _estimate_column_widths: ( query ) ->
     preview_line_count  = 10 ### TAINT make configurable ###
-    line_count          = 0
     R                   =
       leading_rows: []
       widths:       []
     for row from query
-      line_count++
       R.leading_rows.push row
       for k, idx in Object.keys row
         R.widths[ idx ] = Math.max ( R.widths[ idx ] ? 0 ), width_of rpr k
         R.widths[ idx ] = Math.max ( R.widths[ idx ] ? 0 ), width_of rpr row[ k ]
-      # break if line_count >= preview_line_count
     return R
 
   #---------------------------------------------------------------------------------------------------------
